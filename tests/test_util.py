@@ -6,6 +6,7 @@ except KeyError:
 
 import numpy as np
 np.seterr(all='raise') # pay attention to details
+import pandas as pd
 
 import unittest
 from unittest.mock import patch
@@ -179,6 +180,58 @@ class TestParallel(myTestCase):
 
         self.assertIs(nl.util.parallel._map, map)
         self.assertIs(nl.util.parallel._umap, map)
+
+class TestUserinput(myTestCase):
+    def test_make_Trajectory(self):
+        make_Trajectory = nl.util.userinput.make_Trajectory
+
+        dat = nl.Trajectory([1, 2, 3])
+        self.assertIs(make_Trajectory(dat), dat)
+
+        dat = pd.DataFrame(data=[1, 2, 3], columns=['x'])
+        traj = make_Trajectory(dat)
+        self.assertEqual(traj.T, 3)
+        with self.assertRaises(ValueError):
+            make_Trajectory(pd.DataFrame(data=[1, 2, 3], columns=['y']))
+        with self.assertRaises(ValueError):
+            make_Trajectory(pd.DataFrame(data=[1, 2, 3], columns=['x'], index=['a', 4, 5]))
+
+        dat = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], columns=['x', 'y', 'w'])
+        traj = make_Trajectory(dat)
+        self.assertEqual(traj.d, 2)
+        traj = make_Trajectory(dat, pos_columns=['y', 'w'])
+        self.assertEqual(traj.d, 2)
+        self.assertEqual(traj[0][1], 3)
+        traj = make_Trajectory(dat, pos_columns=[['y'], ['x']])
+        self.assertEqual(traj.N, 2)
+
+        dat = pd.Series(data=[1, 2, 3], index=[4, 5, 7])
+        traj = make_Trajectory(dat)
+        self.assertTrue(np.isnan(traj[2][0]))
+        with self.assertRaises(ValueError):
+            make_Trajectory(pd.Series(data=[1, 2, 3], index=[1, 1.5, 2]))
+
+    def test_make_TaggedSet(self):
+        make_TaggedSet = nl.util.userinput.make_TaggedSet
+
+        dat = nl.TaggedSet([1, 2, 3], hasTags=False)
+        self.assertIs(make_TaggedSet(dat), dat)
+
+        dat = pd.DataFrame(data=[[1, 2, 3, 1, 1],
+                                 [4, 5, 6, 1, 2],
+                                 [7, 8, 9, 1, 4],
+                                 [9, 8, 7, 2, 5],
+                                 [6, 5, 4, 2, 6],
+                                ],
+                           columns=['x', 'y', 'z', 'particle', 'frame'],
+                          )
+        ds = make_TaggedSet(dat)
+        self.assertEqual(len(ds), 2)
+        self.assertEqual(len(ds[0]), 4)
+
+        dat = ([i] for i in range(10))
+        ds = make_TaggedSet(dat)
+        self.assertEqual(len(ds), 10)
 
 if __name__ == '__main__': # pragma: no cover
     unittest.main(module=__file__[:-3])

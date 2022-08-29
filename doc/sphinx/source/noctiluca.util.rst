@@ -28,4 +28,12 @@ noctiluca.util.parallel
    :undoc-members:
    :show-inheritance:
 
+noctiluca.util.userinput
+------------------------
+
+.. automodule:: noctiluca.util.userinput
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
