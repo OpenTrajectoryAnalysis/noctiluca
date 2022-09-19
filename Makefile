@@ -1,15 +1,16 @@
 DOCDIR = doc
+EXAMPLEDIR = examples
 SPHINXDIR = $(DOCDIR)/sphinx
 SPHINXSOURCE = $(SPHINXDIR)/source
 SPHINXBUILD = $(SPHINXDIR)/source/_build
 TESTDIR = tests
 TESTFILE = test_noctiluca.py
-COVERAGEREPFLAGS = 
+COVERAGEREPFLAGS =
 COVERAGEREPDIR = $(TESTDIR)/coverage
 DISTDIR = dist
 MODULE = noctiluca
 
-.PHONY : build pre-docs docs tests all clean mydocs mytests myall myclean
+.PHONY : build examples pre-docs docs tests all clean mydocs mytests myall myclean
 
 all : docs tests
 
@@ -20,8 +21,11 @@ build :
 pre-docs :
 	sphinx-apidoc -f -o $(SPHINXSOURCE) $(MODULE)
 	@rm $(SPHINXSOURCE)/modules.rst
-	@cd $(SPHINXSOURCE) && vim -n -S post-apidoc.vim
+	@cd $(SPHINXSOURCE) && vim -nS post-apidoc.vim
 	cd $(SPHINXDIR) && $(MAKE) clean
+	-@rm $(SPHINXSOURCE)/$(EXAMPLEDIR)/*.ipynb
+	@cp -rf $(EXAMPLEDIR) $(SPHINXSOURCE)/
+	@cd $(SPHINXSOURCE) && vim -nS write_examples_rst.vim
 
 docs : pre-docs
 	cd $(SPHINXDIR) && $(MAKE) html

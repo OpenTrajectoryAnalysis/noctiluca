@@ -11,6 +11,14 @@ noctiluca
    noctiluca.util
 
 
+noctiluca.plot
+--------------
+
+.. automodule:: noctiluca.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 noctiluca.taggedset
 -------------------
 

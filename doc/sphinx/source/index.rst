@@ -10,6 +10,7 @@ Welcome to noctiluca's documentation!
    :maxdepth: 2
 
    intro
+   examples
 
 .. toctree::
    :maxdepth: 3
