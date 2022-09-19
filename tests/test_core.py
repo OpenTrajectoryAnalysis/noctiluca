@@ -207,26 +207,43 @@ class Test1TaggedSet(unittest.TestCase):
         for _ in range(5):
             self.ls.makeSelection(nrand=1, random_seed=6542)
             self.assertEqual(len(self.ls), 1)
+            self.ls.makeSelection(1)
+            self.assertEqual(len(self.ls), 1)
         for _ in range(5):
             self.ls.makeSelection(prand=0.5)
+            self.assertEqual(len(self.ls), 1)
+            self.ls.makeSelection(0.5)
             self.assertEqual(len(self.ls), 1)
 
         self.ls.makeSelection(tags="a")
         self.assertSetEqual({*self.ls}, {1, 2})
+        self.ls.makeSelection("a")
+        self.assertSetEqual({*self.ls}, {1, 2})
 
         self.ls.makeSelection(tags=["a", "b"], logic=all)
         self.assertSetEqual({*self.ls}, {1})
+        self.ls.makeSelection(["a", "b"], logic=all)
+        self.assertSetEqual({*self.ls}, {1})
 
         self.ls.makeSelection(tags=["a", "b"], logic=any)
+        self.assertSetEqual({*self.ls}, {1, 2, 3})
+        self.ls.makeSelection(["a", "b"], logic=any)
         self.assertSetEqual({*self.ls}, {1, 2, 3})
 
         def sel(datum, tags):
             return datum >= 2
         self.ls.makeSelection(selector=sel)
         self.assertSetEqual({*self.ls}, {2, 3})
+        self.ls.makeSelection(sel)
+        self.assertSetEqual({*self.ls}, {2, 3})
 
         self.ls.refineSelection(tags='c')
         self.assertSetEqual({*self.ls}, {3})
+        self.ls.refineSelection('c')
+        self.assertSetEqual({*self.ls}, {3})
+
+        with self.assertRaises(ValueError):
+            self.ls.makeSelection(np.array([1])[0]) # doesn't work, bc numpy uses np.int instead of int
 
         sel = self.ls.saveSelection()
         self.assertListEqual(sel, [False, False, True])

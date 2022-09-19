@@ -155,7 +155,7 @@ class TaggedSet():
 
     ### Selection system ###
 
-    def makeSelection(self, **kwargs):
+    def makeSelection(self, arg=None, **kwargs):
         """
         Mark a subset of the current set as 'current selection'. For most
         purposes, the set will behave as if it contained only these data.
@@ -172,6 +172,10 @@ class TaggedSet():
 
         Parameters
         ----------
+        arg : <various>
+            catch-all argument that dispatches to any of the below by type
+            (e.g. ``str`` is interpreted as single tag, ``float`` as `!prand`,
+            any iterable as `!tags`, etc.)
         nrand : int
             number of trajectories to select at random
         prand : float, in [0, 1]
@@ -202,6 +206,23 @@ class TaggedSet():
         --------
         refineSelection, saveSelection, restoreSelection
         """
+        # dispatch arg if specified
+        if arg is not None:
+            if type(arg) == int:
+                kwargs['nrand'] = arg
+            elif type(arg) == float:
+                kwargs['prand'] = arg
+            elif type(arg) == str:
+                kwargs['tags'] = arg
+            elif callable(arg):
+                kwargs['selector'] = arg
+            elif hasattr(arg, '__iter__'):
+                kwargs['tags'] = arg
+            else:
+                raise ValueError(f"Did not understand argument of type {type(arg)}")
+
+            return self.makeSelection(**kwargs)
+
         assert len(self._data) == len(self._tags) == len(self._selected)
         if not 'refining' in kwargs.keys():
             kwargs['refining'] = False
