@@ -19,7 +19,7 @@ __all__ = [
     'TestPlotting',
 ]
 
-class myTestCase(unittest.TestCase):
+class myTestCase(unittest.TestCase): # pragma: no cover
     def assert_array_equal(self, array1, array2):
         try:
             np.testing.assert_array_equal(array1, array2)
