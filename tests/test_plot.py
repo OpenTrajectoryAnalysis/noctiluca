@@ -42,5 +42,20 @@ class TestPlotting(myTestCase):
                 else:
                     self.assertEqual(out[0].get_label(), "N=0, d=0")
 
+    def test_traj_spatial(self):
+        for N in range(1, 4):
+            traj = nl.Trajectory(np.ones((N, 10, 1)))
+            with self.assertRaises(ValueError):
+                out = nl.plot.spatial(traj)
+
+            for d in range(2, 4):
+                traj = nl.Trajectory(np.ones((N, 10, d)))
+                out = nl.plot.spatial(traj, dims=(0, d-1))
+                self.assertEqual(len(out), traj.N)
+                self.assertEqual(out[0].get_label(), "N=0")
+
+            with self.assertRaises(ValueError):
+                out = nl.plot.spatial(traj, dims=(1, 2, 3))
+
 if __name__ == '__main__': # pragma: no cover
     unittest.main(module=__file__[:-3])
