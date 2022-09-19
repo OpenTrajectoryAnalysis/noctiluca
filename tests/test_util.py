@@ -22,6 +22,7 @@ __all__ = [
     'TestMCMC',
     'TestMCMCMCMCRun',
     'TestParallel',
+    'TestUserinput',
 ]
 
 class myTestCase(unittest.TestCase):
