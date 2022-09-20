@@ -1,9 +1,10 @@
-noctiluca
-=========
+API reference
+=============
 
 
 .. contents::
    :local:
+
 .. toctree::
 
    noctiluca.analysis
