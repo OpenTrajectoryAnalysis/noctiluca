@@ -5,6 +5,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import ticker
 
+from . import analysis
+
 def vstime(traj, ax=None, maskNaNs=True, label='', **kwargs):
     """
     Plot a given trajectory vs time
@@ -118,3 +120,57 @@ def spatial(traj, ax=None, dims=(0, 1), maskNaNs=True, label='', **kwargs):
                         **kwargs)
 
     return outs
+
+def msd_overview(dataset, ax=None, dt=1., **kwargs):
+    """
+    Plot individual and ensemble MSDs of the given dataset
+
+    All keyword arguments are forwarded to ``plt.plot()`` for plotting of the
+    individual trajectory MSDs
+
+    Parameters
+    ----------
+    dataset : `TaggedSet` of `Trajectory`
+        the dataset to use
+    ax : matplotlib axes, optional
+        default is to plot to ``plt.gca()``
+    dt : float, optional
+        the time step between two frames of the trajectory; this will simply
+        rescale the horizontal axis of the plot.
+
+    Returns
+    -------
+    list of Line2D
+        all the lines added to the axes. The last entry in the list is the plot
+        of the ensemble mean
+    """
+    if ax is None:
+        ax = plt.gca()
+
+    try:
+        ensemble_label = kwargs['label']
+        del kwargs['label']
+    except KeyError:
+        ensemble_label = 'ensemble mean'
+
+    # individual trajectories
+    lines = []
+    for traj in dataset:
+        msd = analysis.MSD(traj)
+        tmsd = dt*np.arange(len(msd))
+        lines += plt.plot(tmsd[1:], msd[1:], **kwargs)
+
+    # ensemble mean
+    msd = analysis.MSD(dataset)
+    tmsd = dt*np.arange(len(msd))
+    lines += plt.plot(tmsd[1:], msd[1:],
+                      color='k',
+                      linewidth=2,
+                      label=ensemble_label,
+                      )
+
+    ax.legend()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    
+    return lines

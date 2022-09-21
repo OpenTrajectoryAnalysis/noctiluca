@@ -57,5 +57,12 @@ class TestPlotting(myTestCase):
             with self.assertRaises(ValueError):
                 out = nl.plot.spatial(traj, dims=(1, 2, 3))
 
+    def test_msd_overview(self):
+        ds = nl.TaggedSet([nl.Trajectory(np.random.normal(size=(10,))) for _ in range(10)], hasTags=False)
+
+        lines = nl.plot.msd_overview(ds)
+        lines = nl.plot.msd_overview(ds, dt=5, label='test')
+        self.assertEqual(len(lines), len(ds)+1)
+
 if __name__ == '__main__': # pragma: no cover
     unittest.main(module=__file__[:-3])
