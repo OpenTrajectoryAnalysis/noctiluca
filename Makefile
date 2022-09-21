@@ -34,6 +34,7 @@ tests :
 	cd $(TESTDIR) && coverage run $(TESTFILE)
 	@mv $(TESTDIR)/.coverage .
 	coverage html -d $(COVERAGEREPDIR) $(COVERAGEREPFLAGS)
+	coverage report --skip-covered $(COVERAGEREPFLAGS)
 
 clean :
 	-rm -r $(SPHINXBUILD)/*

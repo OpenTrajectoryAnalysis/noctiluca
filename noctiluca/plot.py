@@ -3,6 +3,7 @@ Provide simple plotting capabilities
 """
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import ticker
 
 def vstime(traj, ax=None, maskNaNs=True, label='', **kwargs):
     """
@@ -33,9 +34,16 @@ def vstime(traj, ax=None, maskNaNs=True, label='', **kwargs):
     list of Line2D
         the output of ``ax.plot()``, ordered by ``(N, d)``. Use this to
         customize the plot.
+
+    Notes
+    -----
+    If `!ax` is specified, the trajectory plot is simply added to the existing
+    axes; if it is unspecified, we plot to ``plt.gca()`` and adjust some optics
+    (e.g. constrain xticklabels to be integers)
     """
     if ax is None:
         ax = plt.gca()
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
     tplot = np.arange(traj.T)
     if maskNaNs:
@@ -81,9 +89,16 @@ def spatial(traj, ax=None, dims=(0, 1), maskNaNs=True, label='', **kwargs):
     list of Line2D
         the output of ``ax.plot()``, ordered by ``(N, d)``. Use this to
         customize the plot.
+
+    Notes
+    -----
+    If `!ax` is specified, the trajectory plot is simply added to the existing
+    axes; if it is unspecified, we plot to ``plt.gca()`` and adjust some optics
+    (e.g. constrain xticklabels to be integers)
     """
     if ax is None:
         ax = plt.gca()
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
     if not len(dims) == 2:
         raise ValueError(f"Need exactly two dimensions to plot spatial, got {dims}")
