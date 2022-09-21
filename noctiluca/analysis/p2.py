@@ -140,16 +140,23 @@ def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **
     --------
     P2traj, MSD, ACF
     """
+    # Implementation notes:
+    # + make sure to iterate through the `dataset` only once; then we can use
+    #   `tqdm(dataset)` when calling the function to get a nice progress bar.
+    #   This results in appending to lists in a for-loop, which is
+    #   suboptimal—but this is not the costly part of the computation, so the
+    #   overhead is minimal.
     try:
         p2key = kwargs['writeto']
     except KeyError:
         p2key = DEFKEY
 
+    P2s = []
+    Ns = []
     for traj in dataset:
         P2traj(traj, **kwargs)
-
-    P2s = [traj.meta[p2key]['data'] for traj in dataset]
-    Ns = [traj.meta[p2key]['N'] for traj in dataset]
+        P2s.append(traj.meta[p2key]['data'])
+        Ns.append(traj.meta[p2key]['N'])
 
     maxlen = max(len(P2) for P2 in P2s)
     allP2 = np.empty((len(P2s), maxlen), dtype=float)
@@ -208,10 +215,8 @@ def P2(*args, **kwargs):
         else:
             writeto = DEFKEY
         return args[0].meta[writeto]['data']
-    elif issubclass(type(args[0]), TaggedSet):
+    else: # duck-typing; this allows to use P2(tqdm(data))
         return P2dataset(*args, **kwargs)
-    else: # pragma: no cover
-        raise ValueError("Did not understand first argument, with type {}".format(type(args[0])))
 
 def MSD(*args, **kwargs):
     """
