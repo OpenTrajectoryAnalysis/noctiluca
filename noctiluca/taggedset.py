@@ -1,6 +1,8 @@
 from copy import deepcopy
 import random
 
+from . import parallel
+
 class TaggedSet():
     """
     A set with tags for each object.
@@ -408,59 +410,58 @@ class TaggedSet():
 
     ### Processing data in the set ###
 
-    def apply(self, fun):
+    @staticmethod
+    def _apply_single(args):
+        i, datum, tags, fun = args
+        return i, fun(datum), tags
+
+    def apply(self, fun, inplace=False):
         """
-        Apply the given function to all data.
+        Apply a given function to all data.
 
         Parameters
         ----------
-        fun : callable of signature ``datum = fun(datum)``
-
-        See also
-        --------
-        process, builtins.map
-
-        Notes
-        -----
-        This function works in-place. If you need the original data to remain
-        unchanged, use ``process``.
-        """
-        # Have to explicitly run through the data array, because the entries
-        # might be reassigned.
-        for i, (datum, selected) in enumerate(zip(self._data, self._selected)):
-            if selected:
-                self._data[i] = fun(datum)
-
-    def process(self, fun):
-        """
-        Generate a new `TaggedSet` with processed data.
-
-        Same as `apply`, except that a new set with the processed data is
-        returned, while the original one remains unchanged.
-
-        Parameters
-        ----------
-        fun : callable of signature ``datum = fun(datum)``
+        fun: callable
+            should have signature ``datum = fun(datum)``. Will be mapped across
+            the current selection.
+        inplace : bool, optional
+            set to ``True`` to run in place, i.e. overwrite the original
+            entries. Otherwise, a new ``TaggedSet`` with the processed data
+            will be returned
 
         Returns
         -------
-        TaggedSet
-            a new set containing the processed data
+        TaggedSet or None
 
         See also
         --------
-        apply, builtins.map
+        builtins.map
 
         Notes
         -----
-        The new set will contain only the processed data, i.e. data that are
-        not in the current selection will not be copied.
-        """
-        def gen(origin):
-            for datum, tags in origin(giveTags=True):
-                yield (fun(deepcopy(datum)), deepcopy(tags))
+        This function is applicable when modifying the actual data in the
+        ``TaggedSet``; for simply applying a function to all data in the set,
+        use python's built-in ``map()``. The benefit of ``apply()`` over a
+        construction like ``TaggedSet(map(fun, data))`` is just that it keeps
+        the tags in order.
 
-        return TaggedSet(gen(self))
+        This function is parallel-aware (ordered).
+        """
+        all_iter = enumerate(zip(self._data, self._selected, self._tags))
+        todo = [(i, datum, tags, fun) for i, (datum, selected, tags) in all_iter if selected]
+        imap = parallel._map(TaggedSet._apply_single, todo)
+
+        if inplace:
+            for i, datum, _ in imap:
+                self._data[i] = datum
+
+            return None
+        else:
+            out = TaggedSet()
+            for _, datum, tags in imap:
+                out.add(datum, tags)
+
+            return out
 
     def map_unique(self, fun):
         """
@@ -500,26 +501,3 @@ class TaggedSet():
             return first
         else:
             raise RuntimeError("TaggedSet.map_unique() called on data that do not give uniform values")
-
-#     def map(self, fun):
-#         """
-#         Apply fun to all data and return a list of the results.
-# 
-#         Parameters
-#         ----------
-#         fun : callable that takes a datum as argument
-# 
-#         Returns
-#         -------
-#         A list of fun(datum) for all data in the list
-# 
-#         Notes
-#         -----
-#          - If fun does not provide a return value, the output will be a list of
-#            None's. Use _ = ... to ignore this output if necessary.
-#          - This can be used to manipulate the data in-place; if fun does not
-#            manipulate the datum in place but has signature datum = fun(datum),
-#            then use apply() instead.
-#          - python's built-in map() also works very well with TaggedSets.
-#         """
-#         return [fun(traj) for traj in self]

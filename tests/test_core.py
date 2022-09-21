@@ -13,6 +13,7 @@ from unittest.mock import patch
 from context import noctiluca
 Trajectory = noctiluca.Trajectory
 TaggedSet = noctiluca.TaggedSet
+parallel = noctiluca.parallel
 del noctiluca
 
 """
@@ -23,6 +24,7 @@ __all__ = [
     'Test1Trajectory',
     'Test0TaggedSet',
     'Test1TaggedSet',
+    'TestParallel',
 ]
 
 class myTestCase(unittest.TestCase):
@@ -272,19 +274,19 @@ class Test1TaggedSet(unittest.TestCase):
         self.assertSetEqual(self.ls.tagset(), {'a', 'b', 'c'})
 
     def test_apply(self):
-        def fun(i):
-            return i+1
-        self.ls.apply(fun)
-        self.assertListEqual(self.ls._data, [2, 3, 4])
-
-    def test_process(self):
-        # need a TaggedSet of mutable objects
+        # need a TaggedSet of mutable objects to check that they remain unaltered
         mutls = TaggedSet(zip(['hello', 'World', '!'], [["a", "b"], "a", ["b", "c"]]))
         mutls.makeSelection(tags="a")
-        newls = mutls.process(lambda word : word+'_moo')
+        newls = mutls.apply(lambda word : word+'_moo')
 
         self.assertListEqual(mutls._data, ['hello', 'World', '!'])
         self.assertListEqual(newls._data, ['hello_moo', 'World_moo'])
+
+        # check inplace modification
+        def fun(i):
+            return i+1
+        self.ls.apply(fun, inplace=True)
+        self.assertListEqual(self.ls._data, [2, 3, 4])
 
     def test_map_unique(self):
         def funTrue(x):
@@ -296,6 +298,23 @@ class Test1TaggedSet(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.ls.map_unique(fun2)
         self.assertIsNone(TaggedSet().map_unique(funTrue))
+
+class TestParallel(myTestCase):
+    def test_vanilla(self):
+        self.assertIs(parallel._map, map)
+        self.assertIs(parallel._umap, map)
+
+        # These tests are a bit of an abuse...
+        with parallel.Parallelize(dict):
+            self.assertIs(parallel._map, dict)
+            self.assertIs(parallel._umap, dict)
+
+        with parallel.Parallelize(set, tuple):
+            self.assertIs(parallel._map, set)
+            self.assertIs(parallel._umap, tuple)
+
+        self.assertIs(parallel._map, map)
+        self.assertIs(parallel._umap, map)
 
 if __name__ == '__main__': # pragma: no cover
     unittest.main(module=__file__[:-3])

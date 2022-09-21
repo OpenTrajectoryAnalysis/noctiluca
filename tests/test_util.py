@@ -21,7 +21,6 @@ __all__ = [
     'TestUtil',
     'TestMCMC',
     'TestMCMCMCMCRun',
-    'TestParallel',
     'TestUserinput',
 ]
 
@@ -163,24 +162,6 @@ class TestMCMCMCMCRun(myTestCase):
         tmp = self.myrun.evaluate(lambda sample : 2*sample)
         self.assertIs(tmp[0], tmp[1])
         self.assertTupleEqual(np.array(tmp).shape, (10, 2))
-
-class TestParallel(myTestCase):
-    def test_vanilla(self):
-        self.assertIs(nl.util.parallel._map, map)
-        self.assertIs(nl.util.parallel._umap, map)
-
-        # These tests are a bit of an abuse...
-        # This will be used for actual parallelization when testing msdfit
-        with nl.util.parallel.Parallelize(dict):
-            self.assertIs(nl.util.parallel._map, dict)
-            self.assertIs(nl.util.parallel._umap, dict)
-
-        with nl.util.parallel.Parallelize(set, tuple):
-            self.assertIs(nl.util.parallel._map, set)
-            self.assertIs(nl.util.parallel._umap, tuple)
-
-        self.assertIs(nl.util.parallel._map, map)
-        self.assertIs(nl.util.parallel._umap, map)
 
 class TestUserinput(myTestCase):
     def test_make_Trajectory(self):
