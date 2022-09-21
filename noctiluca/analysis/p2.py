@@ -6,11 +6,13 @@ also the python package ``bayesmsd``.
 """
 
 import warnings
+import itertools
 
 import numpy as np
 
 from ..trajectory import Trajectory
 from ..taggedset import TaggedSet
+from .. import parallel
 
 DEFKEY='P2'
 
@@ -107,6 +109,12 @@ def P2traj(traj, TA=True, recalculate=False,
         else:
             traj.meta[writeto] = out
 
+def _apply_P2traj(args):
+    traj, kwargs, p2key = args
+    P2traj(traj, **kwargs)
+    return (traj.meta[p2key]['data'],
+            traj.meta[p2key]['N'])
+
 def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **kwargs):
     """
     Ensemble average two-point functions
@@ -139,6 +147,10 @@ def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **
     See also
     --------
     P2traj, MSD, ACF
+
+    Notes
+    -----
+    This function is parallel-aware (ordered)
     """
     # Implementation notes:
     # + make sure to iterate through the `dataset` only once; then we can use
@@ -151,18 +163,21 @@ def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **
     except KeyError:
         p2key = DEFKEY
 
-    P2s = []
-    Ns = []
-    for traj in dataset:
-        P2traj(traj, **kwargs)
-        P2s.append(traj.meta[p2key]['data'])
-        Ns.append(traj.meta[p2key]['N'])
+    todo = itertools.product(dataset, [kwargs], [p2key])
+    P2_N = list(parallel._map(_apply_P2traj, todo))
 
-    maxlen = max(len(P2) for P2 in P2s)
-    allP2 = np.empty((len(P2s), maxlen), dtype=float)
+    # make sure that caching works, in case we are actually parallelizing
+    # in this case, if user uses tqdm(dataset), they will see a second progress
+    # bar; couldn't find a better solution
+    if parallel._map is not map:
+        for traj, (P2, N) in zip(dataset, P2_N):
+            traj.meta[p2key] = dict(data=P2, N=N)
+
+    maxlen = max(len(P2) for P2, _ in P2_N)
+    allP2 = np.empty((len(P2_N), maxlen), dtype=float)
     allP2[:] = np.nan
-    allN = np.zeros((len(Ns), maxlen), dtype=int)
-    for i, (P2, N) in enumerate(zip(P2s, Ns)):
+    allN = np.zeros((len(P2_N), maxlen), dtype=int)
+    for i, (P2, N) in enumerate(P2_N):
         allP2[i, :len(P2)] = P2
         allN[i, :len(N)] = N
     allN[np.where(np.isnan(allP2))] = 0
@@ -207,6 +222,10 @@ def P2(*args, **kwargs):
     See also
     --------
     P2traj, P2dataset
+
+    Notes
+    -----
+    parallel-aware (ordered)
     """
     if issubclass(type(args[0]), Trajectory):
         P2traj(*args, **kwargs)
@@ -217,6 +236,17 @@ def P2(*args, **kwargs):
         return args[0].meta[writeto]['data']
     else: # duck-typing; this allows to use P2(tqdm(data))
         return P2dataset(*args, **kwargs)
+
+################## Library of useful two-point functions #######################
+
+# define the "internal" functions here, such that they can be pickled for
+# parallelization
+def SD(xm, xn):
+    return np.sum((xm-xn)**2, axis=-1)
+def SP(xm, xn):
+    return np.sum(xm*xn, axis=-1)
+def normalize(data):
+    return data / data[0]
 
 def MSD(*args, **kwargs):
     """
@@ -252,10 +282,11 @@ def MSD(*args, **kwargs):
     See also
     --------
     P2traj, P2dataset
-    """
-    def SD(xm, xn):
-        return np.sum((xm-xn)**2, axis=-1)
 
+    Notes
+    -----
+    parallel-aware (ordered)
+    """
     return P2(*args, **kwargs, function=SD, writeto='MSD')
 
 def ACov(*args, **kwargs):
@@ -291,10 +322,11 @@ def ACov(*args, **kwargs):
     See also
     --------
     MSD, P2traj, P2dataset
-    """
-    def SP(xm, xn):
-        return np.sum(xm*xn, axis=-1)
 
+    Notes
+    -----
+    parallel-aware (ordered)
+    """
     return P2(*args, **kwargs, function=SP, writeto='ACov')
 
 def ACorr(*args, **kwargs):
@@ -330,12 +362,11 @@ def ACorr(*args, **kwargs):
     See also
     --------
     MSD, P2traj, P2dataset
-    """
-    def SP(xm, xn):
-        return np.sum(xm*xn, axis=-1)
-    def normalize(data):
-        return data / data[0]
 
+    Notes
+    -----
+    parallel-aware (ordered)
+    """
     return P2(*args, **kwargs, function=SP, postproc=normalize, writeto='ACorr')
 
 def VACov(*args, **kwargs):
@@ -371,10 +402,11 @@ def VACov(*args, **kwargs):
     See also
     --------
     MSD, P2traj, P2dataset
-    """
-    def SP(xm, xn):
-        return np.sum(xm*xn, axis=-1)
 
+    Notes
+    -----
+    parallel-aware (ordered)
+    """
     return P2(*args, **kwargs, function=SP, preproc=lambda traj: traj.diff(), writeto='VACov')
 
 def VACorr(*args, **kwargs):
@@ -410,10 +442,9 @@ def VACorr(*args, **kwargs):
     See also
     --------
     MSD, P2traj, P2dataset
-    """
-    def SP(xm, xn):
-        return np.sum(xm*xn, axis=-1)
-    def normalize(data):
-        return data / data[0]
 
+    Notes
+    -----
+    parallel-aware (ordered)
+    """
     return P2(*args, **kwargs, function=SP, preproc=lambda traj: traj.diff(), postproc=normalize, writeto='VACorr')

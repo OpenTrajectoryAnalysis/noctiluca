@@ -12,6 +12,8 @@ from unittest.mock import patch
 
 from context import noctiluca as nl
 
+from multiprocessing import Pool
+
 """
 exec "norm jjd}O" | let @a="\n'" | exec "g/^class Test/norm w\"Ayt(:let @a=@a.\"',\\n'\"" | norm i__all__ = ["ap}kcc]kV?__all__j>>
 """
@@ -91,6 +93,16 @@ class TestP2(myTestCase):
         self.assert_array_equal(MAD, self.traj.meta['P2']['data'])
 
         _ = nl.analysis.p2.P2dataset(self.ds, function=AD)
+
+    def test_parallelization(self):
+        with Pool(1) as mypool:
+            with nl.Parallelize(mypool.imap):
+                msd = nl.analysis.MSD(self.ds)
+
+        for traj in self.ds:
+            self.assertIn('MSD', traj.meta)
+            self.assertIn('data', traj.meta['MSD'])
+            self.assertIn('N', traj.meta['MSD'])
 
 if __name__ == '__main__': # pragma: no cover
     unittest.main(module=__file__[:-3])
