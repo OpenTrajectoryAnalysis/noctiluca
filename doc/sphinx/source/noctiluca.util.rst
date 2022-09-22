@@ -21,14 +21,6 @@ noctiluca.util.mcmc
    :undoc-members:
    :show-inheritance:
 
-noctiluca.util.parallel
------------------------
-
-.. automodule:: noctiluca.util.parallel
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 noctiluca.util.userinput
 ------------------------
 

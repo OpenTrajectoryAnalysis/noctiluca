@@ -31,6 +31,7 @@ extensions = [
         'sphinx.ext.autodoc',
         'sphinx.ext.napoleon',
         'nbsphinx',
+        'sphinx.ext.mathjax',
 ]
 
 autodoc_member_order = 'bysource'

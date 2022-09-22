@@ -12,6 +12,14 @@ API reference
    noctiluca.util
 
 
+noctiluca.parallel
+------------------
+
+.. automodule:: noctiluca.parallel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 noctiluca.plot
 --------------
 

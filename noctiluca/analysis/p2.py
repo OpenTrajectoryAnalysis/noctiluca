@@ -247,6 +247,8 @@ def SP(xm, xn):
     return np.sum(xm*xn, axis=-1)
 def normalize(data):
     return data / data[0]
+def diff(traj):
+    return traj.diff()
 
 def MSD(*args, **kwargs):
     """
@@ -407,7 +409,7 @@ def VACov(*args, **kwargs):
     -----
     parallel-aware (ordered)
     """
-    return P2(*args, **kwargs, function=SP, preproc=lambda traj: traj.diff(), writeto='VACov')
+    return P2(*args, **kwargs, function=SP, preproc=diff, writeto='VACov')
 
 def VACorr(*args, **kwargs):
     """
@@ -447,4 +449,4 @@ def VACorr(*args, **kwargs):
     -----
     parallel-aware (ordered)
     """
-    return P2(*args, **kwargs, function=SP, preproc=lambda traj: traj.diff(), postproc=normalize, writeto='VACorr')
+    return P2(*args, **kwargs, function=SP, preproc=diff, postproc=normalize, writeto='VACorr')

@@ -3,3 +3,6 @@ ipywidgets
 nbsphinx
 matplotlib
 numpy
+pandas
+tqdm
+multiprocessing
