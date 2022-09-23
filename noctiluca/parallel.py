@@ -2,6 +2,7 @@
 Parallelization for noctiluca functions
 
 Use this as context for parallel-aware functions:
+
 >>> import noctiluca as nl
 ... from multiprocessing import Pool
 ...

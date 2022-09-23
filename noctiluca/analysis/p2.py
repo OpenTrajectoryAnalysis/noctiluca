@@ -69,6 +69,7 @@ def P2traj(traj, TA=True, recalculate=False,
     Notes
     -----
     Explicitly, the ``recalculate`` parameter is equivalent to
+
     >>> del traj.meta[writeto]
     """
     if recalculate:
