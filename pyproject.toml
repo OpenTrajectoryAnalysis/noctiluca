@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "noctiluca"
-version = "0.0.2"
+version = "0.1.0"
 authors = [
   { name="Simon Grosse-Holz", email="sgh256@mit.edu" }
 ]
-description = "SPT Trajectory handling"
+description = "SPT trajectory analysis"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
