@@ -42,6 +42,8 @@ clean :
 	-rm .coverage
 
 # Personal convenience targets
+# Edit DUMPPATH to point to a directory that you can easily access
+# For example, when working remotely, sync output via Dropbox to inspect locally
 DUMPPATH = "/home/simongh/Dropbox (MIT)/htmldump"
 mydocs : docs
 	cp -r $(SPHINXBUILD)/* $(DUMPPATH)/sphinx
