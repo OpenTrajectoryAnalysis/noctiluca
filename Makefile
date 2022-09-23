@@ -10,7 +10,7 @@ COVERAGEREPDIR = $(TESTDIR)/coverage
 DISTDIR = dist
 MODULE = noctiluca
 
-.PHONY : build examples pre-docs docs tests all clean mydocs mytests myall myclean
+.PHONY : build pre-docs docs tests all clean mydocs mytests myall myclean
 
 all : docs tests
 

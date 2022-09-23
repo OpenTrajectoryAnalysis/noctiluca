@@ -1,5 +1,28 @@
 [![Documentation Status](https://readthedocs.org/projects/noctiluca/badge/?version=latest)](https://noctiluca.readthedocs.io/en/latest/?badge=latest)
 
-A library for trajectory analysis predominantly from single particle tracking (SPT) experiments. Under construction.
+noctiluca
+=========
 
-Documentation is hosted at [ReadTheDocs](https://noctiluca.readthedocs.org/en/latest)
+A python framework for trajectory analysis in single particle tracking (SPT)
+experiments. For an
+[Introduction](https://noctiluca.readthedocs.org/en/latest/intro.html), some
+worked [examples](https://noctiluca.readthedocs.org/en/latest/examples.html),
+and the full [API
+reference](https://noctiluca.readthedocs.org/en/latest/noctiluca.html) head
+over to our documentation at
+[ReadTheDocs](https://noctiluca.readthedocs.org/en/latest).
+
+To install `noctiluca` you can use the latest stable version from [PyPI](https://pypi.org/project/noctiluca)
+```sh
+$ pip install --upgrade noctiluca
+```
+or the very latest updates right from GitHub:
+```sh
+$ pip install git+https://github.com/OpenTrajectoryAnalysis/noctiluca
+```
+
+Developers
+----------
+Note the `Makefile`, which can be used to build the documentation (using
+Sphinx); run unit tests and check code coverage; and build an updated package
+for release with GNU `make`.
