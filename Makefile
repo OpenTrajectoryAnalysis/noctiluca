@@ -23,7 +23,7 @@ pre-docs :
 	@rm $(SPHINXSOURCE)/modules.rst
 	@cd $(SPHINXSOURCE) && vim -nS post-apidoc.vim
 	cd $(SPHINXDIR) && $(MAKE) clean
-	-@rm $(SPHINXSOURCE)/$(EXAMPLEDIR)/*.ipynb
+	-@rm -rf $(SPHINXSOURCE)/$(EXAMPLEDIR)
 	@cp -rf $(EXAMPLEDIR) $(SPHINXSOURCE)/
 	@cd $(SPHINXSOURCE) && vim -nS write_examples_rst.vim
 
