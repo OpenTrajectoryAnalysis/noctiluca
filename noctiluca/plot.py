@@ -158,16 +158,16 @@ def msd_overview(dataset, ax=None, dt=1., **kwargs):
     for traj in dataset:
         msd = analysis.MSD(traj)
         tmsd = dt*np.arange(len(msd))
-        lines += plt.plot(tmsd[1:], msd[1:], **kwargs)
+        lines += ax.plot(tmsd[1:], msd[1:], **kwargs)
 
     # ensemble mean
     msd = analysis.MSD(dataset)
     tmsd = dt*np.arange(len(msd))
-    lines += plt.plot(tmsd[1:], msd[1:],
-                      color='k',
-                      linewidth=2,
-                      label=ensemble_label,
-                      )
+    lines += ax.plot(tmsd[1:], msd[1:],
+                     color='k',
+                     linewidth=2,
+                     label=ensemble_label,
+                     )
 
     ax.legend()
     ax.set_xscale('log')
