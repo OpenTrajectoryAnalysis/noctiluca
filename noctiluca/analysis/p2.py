@@ -190,7 +190,7 @@ def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **
 
     N = np.sum(allN, axis=0)
     with warnings.catch_warnings():
-        warnings.filterwarnings(action='ignore', message=r'(invalid value|divide by zero) encountered in true_divide')
+        warnings.filterwarnings(action='ignore', message=r'(invalid value|divide by zero) encountered in (true_)?divide')
         meanN = N / np.sum(allN != 0, axis=0)
         eP2 = np.nansum(allP2*allN, axis=0) / N
         if givevar:
