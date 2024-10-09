@@ -1,45 +1,47 @@
 """
 Parallelization for noctiluca functions
-
-Use this as context for parallel-aware functions:
-
->>> import noctiluca as nl
-... from multiprocessing import Pool
-...
-... with Pool(16) as mypool:
-...     with nl.util.Parallelize(mypool.imap):
-...         # parallel-aware stuff goes here
-
-Note that ``Pool.imap`` is preferred over ``Pool.map``, since it gives an
-iterator instead of a list, so is the more literal replacement of the built-in
-``map()``. If the code in question is okay with this, you can also use
-``Pool.imap_unordered``.
-
-We indicate in docstrings that certain functions are "parallel-aware
-(ordered|unordered)" if they use the ``map_like`` or ``map_like_unordered``
-arguments, respectively.
 """
+from multiprocessing import Pool
+
 _map = map
 _umap = map
 
 class Parallelize:
     """
-    Context manager taking care of the parallelization
+    Context manager for parallelization
+
+    We indicate in docstrings that certain functions are "parallel-aware", if
+    they make use of this functionality
 
     Parameters
     ----------
-    map_like : callable
-        should act like ``map()``. Example: ``multiprocessing.Pool.imap``
-    map_like_unordered : callable
-        should act like ``map()``, but might return the result in a different
-        order. Example: ``multiprocessing.Pool.imap_unordered``
+    n : int, optional
+        how many cores to use; defaults to maximum available
+    chunksize : int, optional
+        chunk size for parallel execution, when used. Note that the default of
+        1 might make things very slow (as also noted in the `!multiprocessing`
+        docs).
+
+    Examples
+    --------
+    >>> import noctiluca as nl
+    ...
+    ... with nl.Parallelize():
+    ...     # parallel-aware stuff goes here
+
+    Notes
+    -----
+    It is generally recommended to avoid hyperthreading when parallelizing
+    computations; this can be achieved by running
+    >>> import os
+    ... os.environ['OMP_NUM_THREADS'] = '1'
+
+    at the very beginning of your code, before any other imports (technically:
+    before `!multiprocessing` is imported, which e.g. this module does).
     """
-    def __init__(self, map_like, map_like_unordered=None):
-        self.map = map_like
-        if map_like_unordered is None:
-            self.umap = map_like
-        else:
-            self.umap = map_like_unordered
+    def __init__(self, n=None, chunksize=1):
+        self.n = n
+        self.chunksize = chunksize
 
     def __enter__(self):
         global _map, _umap
@@ -51,3 +53,13 @@ class Parallelize:
         _map = map
         _umap = map
         return False # raise anything that might have happened
+
+    def map(self, func, iterable):
+        with Pool(self.n) as mypool:
+            imap = mypool.imap(func, iterable, self.chunksize)
+            for X in imap: yield X
+
+    def umap(self, func, iterable):
+        with Pool(self.n) as mypool:
+            imap = mypool.imap_unordered(func, iterable, self.chunksize)
+            for X in imap: yield X

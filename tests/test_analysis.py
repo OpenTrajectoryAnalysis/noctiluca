@@ -95,9 +95,8 @@ class TestP2(myTestCase):
         _ = nl.analysis.p2.P2dataset(self.ds, function=AD)
 
     def test_parallelization(self):
-        with Pool(1) as mypool:
-            with nl.Parallelize(mypool.imap):
-                msd = nl.analysis.MSD(self.ds)
+        with nl.Parallelize(n=1):
+            msd = nl.analysis.MSD(self.ds)
 
         for traj in self.ds:
             self.assertIn('MSD', traj.meta)

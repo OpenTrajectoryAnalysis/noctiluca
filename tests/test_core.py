@@ -1,7 +1,7 @@
 import os,sys
 try: # prevent any plotting
     del os.environ['DISPLAY']
-except KeyError:
+except KeyError: # pragma: no cover
     pass
 
 import numpy as np
@@ -304,14 +304,16 @@ class TestParallel(myTestCase):
         self.assertIs(parallel._map, map)
         self.assertIs(parallel._umap, map)
 
-        # These tests are a bit of an abuse...
-        with parallel.Parallelize(dict):
-            self.assertIs(parallel._map, dict)
-            self.assertIs(parallel._umap, dict)
+        # These tests are a bit useless...
+        with parallel.Parallelize(n=1, chunksize=1):
+            self.assertIsNot(parallel._map, map)
+            self.assertIsNot(parallel._umap, map)
 
-        with parallel.Parallelize(set, tuple):
-            self.assertIs(parallel._map, set)
-            self.assertIs(parallel._umap, tuple)
+            ls = list(parallel._map(len, [[1], [1, 2]]))
+            self.assertListEqual(ls, [1, 2])
+
+            ls = list(parallel._umap(len, [[1], [1, 2]]))
+            self.assertCountEqual(ls, [1, 2])
 
         self.assertIs(parallel._map, map)
         self.assertIs(parallel._umap, map)
