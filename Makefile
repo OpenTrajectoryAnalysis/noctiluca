@@ -5,7 +5,7 @@ SPHINXSOURCE = $(SPHINXDIR)/source
 SPHINXBUILD = $(SPHINXDIR)/source/_build
 TESTDIR = tests
 TESTFILE = test_noctiluca.py
-COVERAGEREPFLAGS =
+COVERAGEREPFLAGS = --omit=*/dist-packages/*
 COVERAGEREPDIR = $(TESTDIR)/coverage
 DISTDIR = dist
 MODULE = noctiluca

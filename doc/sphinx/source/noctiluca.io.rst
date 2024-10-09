@@ -29,4 +29,3 @@ noctiluca.io.write
    :undoc-members:
    :show-inheritance:
 
-

@@ -29,4 +29,3 @@ noctiluca.util.userinput
    :undoc-members:
    :show-inheritance:
 
-

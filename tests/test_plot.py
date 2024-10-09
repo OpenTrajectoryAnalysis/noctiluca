@@ -12,6 +12,9 @@ from unittest.mock import patch
 
 from context import noctiluca as nl
 
+from matplotlib import pyplot as plt
+plt.switch_backend('Agg')
+
 """
 exec "norm jjd}O" | let @a="\n'" | exec "g/^class Test/norm w\"Ayt(:let @a=@a.\"',\\n'\"" | norm i__all__ = ["ap}kcc]kV?__all__j>>
 """

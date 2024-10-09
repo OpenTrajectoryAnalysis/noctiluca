@@ -6,6 +6,7 @@ API reference
    :local:
 
 .. toctree::
+   :maxdepth: 4
 
    noctiluca.analysis
    noctiluca.io
@@ -43,5 +44,4 @@ noctiluca.trajectory
    :members:
    :undoc-members:
    :show-inheritance:
-
 
