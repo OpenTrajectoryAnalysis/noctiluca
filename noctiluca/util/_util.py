@@ -1,16 +1,21 @@
 """
 Random assortment of useful auxiliary stuff
 """
+import asyncio
+from functools import wraps
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 import scipy.interpolate
 
 # This is imported in the util module as *, so don't clutter
 """
-exec "norm jjd}O" | let @a="\n'" | exec "g/^def /norm w\"Ayt(:let @a=@a.\"',\\n'\"" | norm i__all__ = ["ap}kcc]kV?__all__j>>
+  exec "norm jjd}O" | let @a="\n'" | exec "g/^def /norm w\"Ayt(:let @a=@a.\"',\\n'\"" | norm i__all__ = ["ap}kcc]kV?__all__j>>
 """
 __all__ = [
     'distribute_noiselevel',
     'log_derivative',
+    'sync_async',
 ]
 
 def distribute_noiselevel(noise2, pixelsize):
@@ -76,3 +81,58 @@ def log_derivative(y, x=None, resampling_density=2):
     ynew = scipy.interpolate.interp1d(x, y)(xnew)
 
     return np.exp(xnew[:-1] + dlogx/2), np.diff(ynew)/dlogx
+
+def sync_async(kw_async_on='run_async'):
+    """
+    Decorator(-factory) to make (async) coroutines execute synchronously
+
+    We add a keyword argument that allows switching between synchronous and
+    asynchronous execution. Synchronous is the default, such that the decorated
+    function/coroutine integrates seamlessly with synchronous libraries
+
+    Adapted from https://stackoverflow.com/a/78911765/12975599
+
+    Parameters
+    ----------
+    kw_async_on : str, optional
+        the name of the keyword argument to add for switching between
+        sync/async
+
+    Examples
+    --------
+    >>> @sync_async()                       # note "()"
+    ... async def coro():
+    ...     # [...] asynchronous code
+    ...     return 'success'
+    ...
+    ... result = coro()                     # in synchronous context
+    ... # OR
+    ... result = await coro(run_async=True) # in asynchronous context
+    """
+    def decorator(coro):
+        @wraps(coro)
+        def wrapper(*args, **kwargs):
+            try:
+                async_on = kwargs[kw_async_on]
+            except KeyError:
+                async_on = False
+            else:
+                del kwargs[kw_async_on]
+
+            if async_on:
+                return coro(*args, **kwargs)
+            else:
+                # Check whether we can just asyncio.run, or whether we need to
+                # push it to a separate thread to avoid interfering with a
+                # running event loop
+                try:
+                    _ = asyncio.get_running_loop()
+                except RuntimeError as err:
+                    return asyncio.run(coro(*args, **kwargs))
+
+                with ThreadPoolExecutor() as pool:
+                    future = pool.submit(lambda : asyncio.run(coro(*args, **kwargs)))
+                    return future.result()
+
+        return wrapper
+    return decorator

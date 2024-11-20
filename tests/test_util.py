@@ -4,6 +4,9 @@ try: # prevent any plotting
 except KeyError:
     pass
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 np.seterr(all='raise') # pay attention to details
 import pandas as pd
@@ -14,7 +17,7 @@ from unittest.mock import patch
 from context import noctiluca as nl
 
 """
-exec "norm jjd}O" | let @a="\n'" | exec "g/^class Test/norm w\"Ayt(:let @a=@a.\"',\\n'\"" | norm i__all__ = ["ap}kcc]kV?__all__j>>
+  exec "norm jjd}O" | let @a="\n'" | exec "g/^class Test/norm w\"Ayt(:let @a=@a.\"',\\n'\"" | norm i__all__ = ["ap}kcc]kV?__all__j>>
 """
 __all__ = [
     'TestClean',
@@ -22,6 +25,7 @@ __all__ = [
     'TestMCMC',
     'TestMCMCMCMCRun',
     'TestUserinput',
+    'TestSyncAsync',
 ]
 
 class myTestCase(unittest.TestCase):
@@ -214,6 +218,45 @@ class TestUserinput(myTestCase):
         dat = ([i] for i in range(10))
         ds = make_TaggedSet(dat)
         self.assertEqual(len(ds), 10)
+
+import threading
+class TestSyncAsync(myTestCase):
+    @nl.util.sync_async()
+    async def coro(self):
+        return 'success'
+
+    @nl.util.sync_async('kw_async')
+    async def coro2(self):
+        return 'success'
+
+    def test_sync(self):
+        self.assertEqual(self.coro(), 'success')
+
+    def test_async(self):
+        async def main():
+            self.assertEqual(await self.coro(run_async=True), 'success')
+        asyncio.run(main())
+
+        async def main():
+            self.assertEqual(await self.coro2(kw_async=True), 'success')
+        asyncio.run(main())
+
+    def test_sync_in_async_context(self):
+        async def main():
+            self.assertEqual(self.coro(), 'success')
+        asyncio.run(main())
+
+    def test_async_different_thread(self):
+        async def main():
+            def running_in_thread():
+                self.assertEqual(self.coro(), 'success')
+
+            with ThreadPoolExecutor() as executor:
+                futu = executor.submit(running_in_thread)
+                self.assertIsNone(futu.result())
+
+        asyncio.run(main())
+
 
 if __name__ == '__main__': # pragma: no cover
     unittest.main(module=__file__[:-3])
