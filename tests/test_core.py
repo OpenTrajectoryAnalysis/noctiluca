@@ -299,6 +299,11 @@ class Test1TaggedSet(unittest.TestCase):
             self.ls.map_unique(fun2)
         self.assertIsNone(TaggedSet().map_unique(funTrue))
 
+def parfun(args=None, err=False): # needs to be pickleable, which TestCase is not
+    if err:
+        raise RuntimeError
+    return 'success'
+
 class TestParallel(myTestCase):
     def test_vanilla(self):
         self.assertIs(parallel._map, map)
@@ -317,6 +322,26 @@ class TestParallel(myTestCase):
 
         self.assertIs(parallel._map, map)
         self.assertIs(parallel._umap, map)
+
+    def test_parfun(self):
+        with parallel.Parallelize(n=1):
+            res = list(parallel._map(parfun, np.arange(2)))
+
+        self.assertListEqual(res, ['success', 'success'])
+
+    def test_dummy_executor(self):
+        executor = parallel.DummyExecutor()
+        self.assertEqual(executor.submit(parfun).result(), 'success')
+        with self.assertRaises(RuntimeError):
+            res = executor.submit(parfun, err=True).result()
+
+    def test_executor(self):
+        def to_run():
+            return parallel._executor.submit(parfun).result()
+
+        self.assertEqual(to_run(), 'success')
+        with parallel.Parallelize(n=1):
+            self.assertEqual(to_run(), 'success')
 
 if __name__ == '__main__': # pragma: no cover
     unittest.main(module=__file__[:-3])

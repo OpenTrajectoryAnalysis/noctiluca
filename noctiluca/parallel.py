@@ -2,9 +2,25 @@
 Parallelization for noctiluca functions
 """
 from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor, Executor, Future
+
+class DummyExecutor(Executor):
+    # A dummy executor that just runs everything synchronously
+    # adapted from https://stackoverflow.com/a/10436851/12975599
+    def submit(self, fun, *args, **kwargs):
+        futu = Future()
+        try:
+            result = fun(*args, **kwargs)
+        except BaseException as e:
+            futu.set_exception(e)
+        else:
+            futu.set_result(result)
+
+        return futu
 
 _map = map
 _umap = map
+_executor = DummyExecutor()
 
 class Parallelize:
     """
@@ -44,14 +60,17 @@ class Parallelize:
         self.chunksize = chunksize
 
     def __enter__(self):
-        global _map, _umap
+        global _map, _umap, _executor
         _map = self.map
         _umap = self.umap
+        _executor = ProcessPoolExecutor(max_workers=self.n)
 
     def __exit__(self, type, value, traceback):
-        global _map, _umap
+        global _map, _umap, _executor
         _map = map
         _umap = map
+        _executor.shutdown()
+        _executor = DummyExecutor()
         return False # raise anything that might have happened
 
     def map(self, func, iterable):
