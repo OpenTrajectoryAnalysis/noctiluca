@@ -18,10 +18,6 @@ class DummyExecutor(Executor):
 
         return futu
 
-_map = map
-_umap = map
-_executor = DummyExecutor()
-
 class Parallelize:
     """
     Context manager for parallelization
@@ -59,6 +55,10 @@ class Parallelize:
         self.n = n
         self.chunksize = chunksize
 
+    @staticmethod
+    def serial_map(*args, chunksize=None, **kwargs):
+        return map(*args, **kwargs)
+
     def __enter__(self):
         global _map, _umap, _executor
         _map = self.map
@@ -67,18 +67,27 @@ class Parallelize:
 
     def __exit__(self, type, value, traceback):
         global _map, _umap, _executor
-        _map = map
-        _umap = map
+        _map = Parallelize.serial_map
+        _umap = Parallelize.serial_map
         _executor.shutdown()
         _executor = DummyExecutor()
         return False # raise anything that might have happened
 
-    def map(self, func, iterable):
-        with Pool(self.n) as mypool:
-            imap = mypool.imap(func, iterable, self.chunksize)
-            for X in imap: yield X
+    def map(self, func, iterable, chunksize=None):
+        if chunksize is None:
+            chunksize = self.chunksize
 
-    def umap(self, func, iterable):
+        return _executor.map(func, iterable, chunksize=chunksize)
+
+    # Legacy, probably unnecessary
+    def umap(self, func, iterable, chunksize=None):
+        if chunksize is None:
+            chunksize = self.chunksize
+
         with Pool(self.n) as mypool:
             imap = mypool.imap_unordered(func, iterable, self.chunksize)
             for X in imap: yield X
+
+_map = Parallelize.serial_map
+_umap = Parallelize.serial_map
+_executor = DummyExecutor()

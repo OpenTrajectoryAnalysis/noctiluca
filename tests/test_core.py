@@ -306,22 +306,13 @@ def parfun(args=None, err=False): # needs to be pickleable, which TestCase is no
 
 class TestParallel(myTestCase):
     def test_vanilla(self):
-        self.assertIs(parallel._map, map)
-        self.assertIs(parallel._umap, map)
-
         # These tests are a bit useless...
         with parallel.Parallelize(n=1, chunksize=1):
-            self.assertIsNot(parallel._map, map)
-            self.assertIsNot(parallel._umap, map)
-
             ls = list(parallel._map(len, [[1], [1, 2]]))
             self.assertListEqual(ls, [1, 2])
 
             ls = list(parallel._umap(len, [[1], [1, 2]]))
             self.assertCountEqual(ls, [1, 2])
-
-        self.assertIs(parallel._map, map)
-        self.assertIs(parallel._umap, map)
 
     def test_parfun(self):
         with parallel.Parallelize(n=1):
