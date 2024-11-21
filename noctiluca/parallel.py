@@ -73,11 +73,17 @@ class Parallelize:
         _executor = DummyExecutor()
         return False # raise anything that might have happened
 
-    def map(self, func, iterable, chunksize=None):
+    def map(self, func, todo, chunksize=None):
         if chunksize is None:
             chunksize = self.chunksize
 
-        return _executor.map(func, iterable, chunksize=chunksize)
+        if chunksize < 0:
+            return map(func, todo)
+        else:
+            if chunksize == 0:
+                chunksize = len(todo)
+
+            return _executor.map(func, todo, chunksize=chunksize)
 
     # Legacy, probably unnecessary
     def umap(self, func, iterable, chunksize=None):

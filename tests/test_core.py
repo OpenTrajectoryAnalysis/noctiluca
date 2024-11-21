@@ -320,6 +320,14 @@ class TestParallel(myTestCase):
 
         self.assertListEqual(res, ['success', 'success'])
 
+    def test_chunksize(self):
+        with parallel.Parallelize(n=1):
+            res = list(parallel._map(parfun, np.arange(2), chunksize=0))
+            self.assertListEqual(res, ['success', 'success'])
+
+            res = list(parallel._map(parfun, np.arange(2), chunksize=-1))
+            self.assertListEqual(res, ['success', 'success'])
+
     def test_dummy_executor(self):
         executor = parallel.DummyExecutor()
         self.assertEqual(executor.submit(parfun).result(), 'success')
