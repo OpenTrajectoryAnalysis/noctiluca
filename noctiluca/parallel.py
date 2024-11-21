@@ -3,6 +3,7 @@ Parallelization for noctiluca functions
 """
 from multiprocessing import Pool
 from concurrent.futures import ProcessPoolExecutor, Executor, Future
+from functools import wraps
 
 class DummyExecutor(Executor):
     # A dummy executor that just runs everything synchronously
@@ -51,31 +52,24 @@ class Parallelize:
     at the very beginning of your code, before any other imports (technically:
     before `!multiprocessing` is imported, which e.g. this module does).
     """
-    def __init__(self, n=None, chunksize=1):
+    def __init__(self, n=None):
         self.n = n
-        self.chunksize = chunksize
-
-    @staticmethod
-    def serial_map(*args, chunksize=None, **kwargs):
-        return map(*args, **kwargs)
 
     def __enter__(self):
-        global _map, _umap, _executor
+        global _executor, _map
         _map = self.map
-        _umap = self.umap
         _executor = ProcessPoolExecutor(max_workers=self.n)
 
     def __exit__(self, type, value, traceback):
-        global _map, _umap, _executor
+        global _executor, _map
         _map = Parallelize.serial_map
-        _umap = Parallelize.serial_map
         _executor.shutdown()
         _executor = DummyExecutor()
         return False # raise anything that might have happened
 
     def map(self, func, todo, chunksize=None):
         if chunksize is None:
-            chunksize = self.chunksize
+            chunksize = _chunksize
 
         if chunksize < 0:
             return map(func, todo)
@@ -85,15 +79,45 @@ class Parallelize:
 
             return _executor.map(func, todo, chunksize=chunksize)
 
-    # Legacy, probably unnecessary
-    def umap(self, func, iterable, chunksize=None):
-        if chunksize is None:
-            chunksize = self.chunksize
+    @staticmethod
+    def serial_map(*args, chunksize=None, **kwargs):
+        return map(*args, **kwargs)
 
-        with Pool(self.n) as mypool:
-            imap = mypool.imap_unordered(func, iterable, self.chunksize)
-            for X in imap: yield X
-
+_chunksize = 1
 _map = Parallelize.serial_map
-_umap = Parallelize.serial_map
 _executor = DummyExecutor()
+
+def chunky(kwarg_name='chunksize', default=1):
+    """
+    A decorator for functions using the Parallelize interface
+
+    This decorator adds a kwarg 'chunksize' (or custom name) and sets
+    `!parallel._chunksize` accordingly before running the function. This
+    facilitates user control over parallelization level.
+
+    Parameters
+    ----------
+    kwarg_name : str
+        the name for the kwarg to add
+    default : int
+        the default chunksize value
+    """
+    def decorator(fun):
+        @wraps(fun)
+        def wrapper(*args, **kwargs):
+            global _chunksize
+            chunksize_save = _chunksize
+
+            try:
+                _chunksize = kwargs[kwarg_name]
+            except KeyError:
+                _chunksize = default
+            else:
+                del kwargs[kwarg_name]
+
+            try:
+                return fun(*args, **kwargs)
+            finally:
+                _chunksize = chunksize_save
+        return wrapper
+    return decorator

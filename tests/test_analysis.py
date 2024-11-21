@@ -96,7 +96,7 @@ class TestP2(myTestCase):
 
     def test_parallelization(self):
         with nl.Parallelize(n=1):
-            msd = nl.analysis.MSD(self.ds)
+            msd = nl.analysis.MSD(self.ds, chunksize=1)
 
         for traj in self.ds:
             self.assertIn('MSD', traj.meta)

@@ -7,6 +7,7 @@ also the python package ``bayesmsd``.
 
 import warnings
 import itertools
+from tqdm.auto import tqdm
 
 import numpy as np
 
@@ -116,7 +117,8 @@ def _apply_P2traj(args):
     return (traj.meta[p2key]['data'],
             traj.meta[p2key]['N'])
 
-def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **kwargs):
+@parallel.chunky('chunksize', -1)
+def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, show_progress=False, **kwargs):
     """
     Ensemble average two-point functions
 
@@ -133,6 +135,8 @@ def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **
         whether to return the sample size for each MSD data point
     average_in_logspace : bool, optional
         set to ``True`` to replace the arithmetic with a geometric mean.
+    show_progress : bool, optional
+        show a progress bar (tqdm)
     kwargs : keyword arguments
         are all forwarded to forwarded to `P2traj`, see that docstring.
 
@@ -165,14 +169,14 @@ def P2dataset(dataset, givevar=False, giveN=False, average_in_logspace=False, **
         p2key = DEFKEY
 
     todo = itertools.product(dataset, [kwargs], [p2key])
-    P2_N = list(parallel._map(_apply_P2traj, todo))
+    imap = parallel._map(_apply_P2traj, todo)
+    if show_progress: # pragma: no cover
+        imap = tqdm(imap, total=len(dataset))
+    P2_N = list(imap)
 
-    # make sure that caching works, in case we are actually parallelizing
-    # in this case, if user uses tqdm(dataset), they will see a second progress
-    # bar; couldn't find a better solution
-    if parallel._map is not map:
-        for traj, (P2, N) in zip(dataset, P2_N):
-            traj.meta[p2key] = dict(data=P2, N=N)
+    # force caching (in case we're parallelizing)
+    for traj, (P2, N) in zip(dataset, P2_N):
+        traj.meta[p2key] = dict(data=P2, N=N)
 
     maxlen = max(len(P2) for P2, _ in P2_N)
     allP2 = np.empty((len(P2_N), maxlen), dtype=float)
