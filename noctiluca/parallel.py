@@ -63,7 +63,7 @@ class Parallelize:
     def __exit__(self, type, value, traceback):
         global _executor, _map
         _map = Parallelize.serial_map
-        _executor.shutdown()
+        _executor.shutdown(wait=False)
         _executor = DummyExecutor()
         return False # raise anything that might have happened
 
